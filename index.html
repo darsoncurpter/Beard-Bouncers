@@ -147,10 +147,98 @@
             color: #888888;
             cursor: not-allowed;
         }
+
+        /* Dev Menu Layout Styling */
+        #dev-wrapper {
+            display: none;
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+            z-index: 10;
+        }
+        #dev-btn {
+            background-color: #ff0055;
+            color: #ffffff;
+            border: none;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: opacity 0.2s;
+        }
+        #dev-btn:hover {
+            opacity: 0.8;
+        }
+        #dev-menu {
+            display: none;
+            background-color: #111111;
+            border: 2px solid #ff0055;
+            padding: 15px;
+            width: 280px;
+            flex-direction: column;
+            gap: 12px;
+            color: #ffffff;
+        }
+        .dev-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #ff0055;
+            text-transform: uppercase;
+            border-bottom: 1px solid #555555;
+            padding-bottom: 5px;
+        }
+        .dev-row {
+            display: flex;
+            gap: 5px;
+        }
+        .dev-input {
+            width: 100px;
+            background: #222222;
+            border: 1px solid #555555;
+            color: #ffffff;
+            padding: 4px;
+            font-weight: bold;
+        }
+        .dev-action-btn {
+            flex-grow: 1;
+            background-color: #ff0055;
+            color: #ffffff;
+            border: none;
+            padding: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
     <div id="id-display">000000000</div>
+    
+    <!-- Dev Menu Button & Content -->
+    <div id="dev-wrapper">
+        <div id="dev-menu">
+            <div class="dev-title">Dev Controls</div>
+            <div class="dev-row">
+                <input type="number" id="dev-coin-input" class="dev-input" value="1000">
+                <button id="dev-add-coins" class="dev-action-btn">Add Coins</button>
+            </div>
+            <div class="dev-row">
+                <input type="number" id="dev-mult-input" class="dev-input" value="5">
+                <button id="dev-add-mult" class="dev-action-btn">Add Mult</button>
+            </div>
+            <div class="dev-row">
+                <input type="number" id="dev-george-input" class="dev-input" value="10">
+                <button id="dev-add-george" class="dev-action-btn">Spawn Bouncers</button>
+            </div>
+        </div>
+        <button id="dev-btn">Dev Menu</button>
+    </div>
+
     <div id="ui-wrapper">
         <div id="score-board">COINS:0</div>
         <button id="shop-btn">Open Shop</button>
@@ -211,6 +299,19 @@
         const georgeCountSpan = document.getElementById('george-count');
         const georgeCostSpan = document.getElementById('george-cost');
 
+        // Dev Elements
+        const devWrapper = document.getElementById('dev-wrapper');
+        const devBtn = document.getElementById('dev-btn');
+        const devMenu = document.getElementById('dev-menu');
+        const devCoinInput = document.getElementById('dev-coin-input');
+        const devAddCoinsBtn = document.getElementById('dev-add-coins');
+        const devMultInput = document.getElementById('dev-mult-input');
+        const devAddMultBtn = document.getElementById('dev-add-mult');
+        const devGeorgeInput = document.getElementById('dev-george-input');
+        const devAddGeorgeBtn = document.getElementById('dev-add-george');
+
+        const SECRET_ID = "542185987";
+
         // Game State Variables
         let gameId = '';
         let coins = 0;
@@ -244,7 +345,6 @@
                 speedCost = save.speedCost || 25;
                 georgeCost = save.georgeCost || 50;
 
-                // Offline Earnings Calculation
                 if (save.lastSavedTime) {
                     const timePassedMs = Date.now() - save.lastSavedTime;
                     calculateOfflineEarnings(timePassedMs);
@@ -252,6 +352,7 @@
             } else {
                 gameId = generateGameId();
             }
+            checkDevAccess();
             updateUI();
         }
 
@@ -268,6 +369,15 @@
                 lastSavedTime: Date.now()
             };
             localStorage.setItem('beardBouncersSave', JSON.stringify(save));
+        }
+
+        function checkDevAccess() {
+            if (gameId === SECRET_ID) {
+                devWrapper.style.display = 'flex';
+            } else {
+                devWrapper.style.display = 'none';
+                devMenu.style.display = 'none';
+            }
         }
 
         function calculateOfflineEarnings(msElapsed) {
@@ -309,6 +419,46 @@
                 shopMenu.style.display = 'flex';
                 shopBtn.textContent = 'Close Shop';
                 updateShopButtons();
+            }
+        });
+
+        // Dev Menu UI Interaction
+        devBtn.addEventListener('click', () => {
+            if (devMenu.style.display === 'flex') {
+                devMenu.style.display = 'none';
+            } else {
+                devMenu.style.display = 'flex';
+            }
+        });
+
+        // Dev Actions Functional Logic
+        devAddCoinsBtn.addEventListener('click', () => {
+            const val = parseInt(devCoinInput.value, 10);
+            if (!isNaN(val) && val > 0) {
+                coins += val;
+                updateUI();
+                saveGame();
+            }
+        });
+
+        devAddMultBtn.addEventListener('click', () => {
+            const val = parseInt(devMultInput.value, 10);
+            if (!isNaN(val) && val > 0) {
+                multiplier += val;
+                updateUI();
+                saveGame();
+            }
+        });
+
+        devAddGeorgeBtn.addEventListener('click', () => {
+            const val = parseInt(devGeorgeInput.value, 10);
+            if (!isNaN(val) && val > 0) {
+                for (let i = 0; i < val; i++) {
+                    totalGeorges += 1;
+                    spawnBouncerDOM();
+                }
+                updateUI();
+                saveGame();
             }
         });
 
