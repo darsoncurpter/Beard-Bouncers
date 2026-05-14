@@ -63,7 +63,7 @@
             letter-spacing: 1px;
             user-select: none;
         }
-        #shop-btn {
+        .ui-btn {
             background-color: #ffffff;
             color: #000000;
             border: none;
@@ -74,8 +74,12 @@
             text-transform: uppercase;
             transition: opacity 0.2s;
         }
-        #shop-btn:hover {
+        .ui-btn:hover {
             opacity: 0.8;
+        }
+        #reset-btn {
+            background-color: #555555;
+            color: #ffffff;
         }
         #shop-menu {
             display: none;
@@ -241,7 +245,8 @@
 
     <div id="ui-wrapper">
         <div id="score-board">COINS:0</div>
-        <button id="shop-btn">Open Shop</button>
+        <button id="shop-btn" class="ui-btn">Open Shop</button>
+        <button id="reset-btn" class="ui-btn">Reset Game</button>
         <div id="shop-menu">
             <div class="tabs">
                 <button class="tab-btn active" onclick="switchTab('upgrades-tab')">Upgrades</button>
@@ -288,6 +293,7 @@
         const scoreBoard = document.getElementById('score-board');
         const idDisplay = document.getElementById('id-display');
         const shopBtn = document.getElementById('shop-btn');
+        const resetBtn = document.getElementById('reset-btn');
         const shopMenu = document.getElementById('shop-menu');
         const buyMultBtn = document.getElementById('buy-mult');
         const multValSpan = document.getElementById('mult-val');
@@ -371,6 +377,43 @@
             localStorage.setItem('beardBouncersSave', JSON.stringify(save));
         }
 
+        function clearAllBouncers() {
+            bouncers.forEach(b => {
+                if (b.element && b.element.parentNode) {
+                    b.element.parentNode.removeChild(b.element);
+                }
+            });
+            bouncers = [];
+        }
+
+        function resetProgress() {
+            if (confirm("Are you sure you want to reset all progress? Your Player ID will not change.")) {
+                // Clear UI objects
+                clearAllBouncers();
+                
+                // Reset stats
+                coins = 0;
+                multiplier = 1;
+                speedUpgrades = 0;
+                totalGeorges = 1;
+                multCost = 10;
+                speedCost = 25;
+                georgeCost = 50;
+
+                // Close menus
+                shopMenu.style.display = 'none';
+                shopBtn.textContent = 'Open Shop';
+                devMenu.style.display = 'none';
+
+                // Re-initialize starting bouncer
+                spawnBouncerDOM();
+
+                // Sync storage and display
+                updateUI();
+                saveGame();
+            }
+        }
+
         function checkDevAccess() {
             if (gameId === SECRET_ID) {
                 devWrapper.style.display = 'flex';
@@ -421,6 +464,8 @@
                 updateShopButtons();
             }
         });
+
+        resetBtn.addEventListener('click', resetProgress);
 
         // Dev Menu UI Interaction
         devBtn.addEventListener('click', () => {
