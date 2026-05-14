@@ -19,6 +19,17 @@
             align-items: center;
             font-family: sans-serif;
         }
+        #id-display {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 1px;
+            user-select: none;
+            z-index: 10;
+        }
         #box-container {
             position: relative;
             width: 95vmin;
@@ -30,7 +41,7 @@
             position: absolute;
             top: 0;
             left: 0;
-            width: 15vmin; 
+            width: 15vmin;
             height: auto;
             user-select: none;
             will-change: transform;
@@ -139,17 +150,15 @@
     </style>
 </head>
 <body>
-
+    <div id="id-display">000000000</div>
     <div id="ui-wrapper">
         <div id="score-board">COINS:0</div>
         <button id="shop-btn">Open Shop</button>
-        
         <div id="shop-menu">
             <div class="tabs">
                 <button class="tab-btn active" onclick="switchTab('upgrades-tab')">Upgrades</button>
                 <button class="tab-btn" onclick="switchTab('georges-tab')">Bouncers</button>
             </div>
-
             <!-- Tab 1: Stat Upgrades -->
             <div id="upgrades-tab" class="tab-content active">
                 <div class="shop-item">
@@ -167,7 +176,6 @@
                     <button id="buy-speed" class="buy-btn">Upgrade</button>
                 </div>
             </div>
-
             <!-- Tab 2: Extra Georges -->
             <div id="georges-tab" class="tab-content">
                 <div class="shop-item">
@@ -190,27 +198,25 @@
     <script>
         const container = document.getElementById('box-container');
         const scoreBoard = document.getElementById('score-board');
+        const idDisplay = document.getElementById('id-display');
         const shopBtn = document.getElementById('shop-btn');
         const shopMenu = document.getElementById('shop-menu');
-        
         const buyMultBtn = document.getElementById('buy-mult');
         const multValSpan = document.getElementById('mult-val');
         const multCostSpan = document.getElementById('mult-cost');
-
         const buySpeedBtn = document.getElementById('buy-speed');
         const speedValSpan = document.getElementById('speed-val');
         const speedCostSpan = document.getElementById('speed-cost');
-
         const buyGeorgeBtn = document.getElementById('buy-george');
         const georgeCountSpan = document.getElementById('george-count');
         const georgeCostSpan = document.getElementById('george-cost');
 
         // Game State Variables
+        let gameId = '';
         let coins = 0;
         let multiplier = 1;
         let speedUpgrades = 0;
         let totalGeorges = 1;
-
         let multCost = 10;
         let speedCost = 25;
         let georgeCost = 50;
@@ -219,11 +225,17 @@
         let bouncers = [];
         let lastTimestamp = performance.now();
 
+        function generateGameId() {
+            const num = Math.floor(100000000 + Math.random() * 900000000);
+            return num.toString();
+        }
+
         // LocalStorage Logic: Save & Load
         function loadGame() {
             const savedData = localStorage.getItem('beardBouncersSave');
             if (savedData) {
                 const save = JSON.parse(savedData);
+                gameId = save.gameId || generateGameId();
                 coins = save.coins || 0;
                 multiplier = save.multiplier || 1;
                 speedUpgrades = save.speedUpgrades || 0;
@@ -237,28 +249,32 @@
                     const timePassedMs = Date.now() - save.lastSavedTime;
                     calculateOfflineEarnings(timePassedMs);
                 }
+            } else {
+                gameId = generateGameId();
             }
             updateUI();
         }
 
         function saveGame() {
             const save = {
-                coins, multiplier, speedUpgrades, totalGeorges,
-                multCost, speedCost, georgeCost,
+                gameId,
+                coins,
+                multiplier,
+                speedUpgrades,
+                totalGeorges,
+                multCost,
+                speedCost,
+                georgeCost,
                 lastSavedTime: Date.now()
             };
             localStorage.setItem('beardBouncersSave', JSON.stringify(save));
         }
 
         function calculateOfflineEarnings(msElapsed) {
-            // Establishes a baseline frequency: approx 1.5 bounces per bouncer per second at base speed
             const baseBouncesPerSec = 1.5 + (speedUpgrades * 0.2);
             const totalEstimatedBounces = (msElapsed / 1000) * baseBouncesPerSec * totalGeorges;
-            
-            // Earn 50% rate value while offline
             const offlineRate = 0.5;
             const earnedCoins = Math.floor(totalEstimatedBounces * multiplier * offlineRate);
-            
             if (earnedCoins > 0) {
                 coins += earnedCoins;
                 alert(`Welcome back! You earned ${earnedCoins} COINS while offline (50% rate).`);
@@ -266,6 +282,7 @@
         }
 
         function updateUI() {
+            idDisplay.textContent = gameId;
             scoreBoard.textContent = `COINS:${coins}`;
             multValSpan.textContent = multiplier;
             multCostSpan.textContent = `Cost: ${multCost}`;
@@ -280,7 +297,6 @@
         window.switchTab = function(tabId) {
             document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            
             document.getElementById(tabId).classList.add('active');
             event.currentTarget.classList.add('active');
         };
@@ -317,13 +333,10 @@
                 coins -= speedCost;
                 speedUpgrades += 1;
                 speedCost = Math.floor(speedCost * 1.5);
-                
-                // Live-update speeds of existing screen items
                 bouncers.forEach(b => {
                     b.speedX = (3 + speedUpgrades) * Math.sign(b.speedX);
                     b.speedY = (3 + speedUpgrades) * Math.sign(b.speedY);
                 });
-
                 updateUI();
                 saveGame();
             }
@@ -334,7 +347,6 @@
                 coins -= georgeCost;
                 totalGeorges += 1;
                 georgeCost = Math.floor(georgeCost * 2.0);
-                
                 spawnBouncerDOM();
                 updateUI();
                 saveGame();
@@ -358,7 +370,6 @@
                 initialized: false
             };
 
-            // Set positions post layout confirmation frame
             imgElement.addEventListener('load', () => {
                 const limitX = container.clientWidth - imgElement.clientWidth;
                 const limitY = container.clientHeight - imgElement.clientHeight;
@@ -367,7 +378,6 @@
                 bouncerObj.initialized = true;
             });
 
-            // Fast-load fallback hook validation
             if (imgElement.complete) {
                 setTimeout(() => {
                     if (!bouncerObj.initialized) {
@@ -379,19 +389,13 @@
                     }
                 }, 50);
             }
-
             bouncers.push(bouncerObj);
         }
 
-        // Loop runs continuously using RequestAnimationFrame AND requestPostAnimationFrame backup 
-        // to stay alive if minimized/backgrounded in most modern browsers.
         function mainLoop(timestamp) {
             const elapsed = timestamp - lastTimestamp;
             lastTimestamp = timestamp;
-
-            // Cap step size to avoid wall clipping frame drops
             const steps = Math.min(Math.floor(elapsed / 16.66), 5) || 1;
-
             let totalBouncesThisFrame = 0;
             const boxWidth = container.clientWidth;
             const boxHeight = container.clientHeight;
@@ -399,7 +403,6 @@
             for (let s = 0; s < steps; s++) {
                 bouncers.forEach(b => {
                     if (!b.initialized) return;
-
                     const imgWidth = b.element.clientWidth;
                     const imgHeight = b.element.clientHeight;
 
@@ -428,7 +431,6 @@
                 });
             }
 
-            // Sync structural changes with render matrices
             bouncers.forEach(b => {
                 if (b.initialized) {
                     b.element.style.transform = `translate(${b.posX}px, ${b.posY}px)`;
@@ -442,7 +444,6 @@
                     updateShopButtons();
                 }
             }
-
             requestAnimationFrame(mainLoop);
         }
 
@@ -453,7 +454,6 @@
         }
         requestAnimationFrame(mainLoop);
 
-        // Regular background intervals save progress every 5 seconds
         setInterval(saveGame, 5000);
         window.addEventListener('beforeunload', saveGame);
 
